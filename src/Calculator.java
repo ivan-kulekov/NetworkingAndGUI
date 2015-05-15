@@ -1,322 +1,459 @@
 import javax.swing.*;
+import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * @author Ivan Kulekov (ivankulekov10@gmail.com)
  * @since May 14 , 2015 17:00
  */
-public class Calculator extends JFrame {
+public class Calculator extends JFrame implements ActionListener {
+  final int MAX_INPUT_LENGTH = 20;
+  final int INPUT_MODE = 0;
+  final int RESULT_MODE = 1;
+  final int ERROR_MODE = 2;
+  int displayMode;
 
-  private static final String NUMBER_PROPERTY = "NUMBER_PROPERTY";
-  private static final String OPERATOR_PROPERTY = "OPERATOR_PROPERTY";
-  private static final String FIRST = "FIRST";
-  private static final String VALID = "VALID";
+  boolean clearOnNextDigit, percent;
+  double lastNumber;
+  String lastOperator;
 
-  private String status;
-  private int previousOperation;
-  private double lastValue;
-  private JTextArea lcdDisplay;
-  private JLabel errorDisplay;
+  private JLabel jlbOutput;
+  private JButton jbnButtons[];
+  private JPanel jplMaster, jplBackSpace, jplControl;
 
-  /**
-   * Create constructor for the Calculator class and define the JPanel Properties.
-   */
+	/*
+   * Font(String name, int style, int size)
+      Creates a new Font from the specified name, style and point size.
+	 */
+
+  Font f12 = new Font("Times New Roman", 0, 12);
+  Font f121 = new Font("Times New Roman", 1, 12);
+
+  // Constructor
   public Calculator() {
-    super("Calculator");
+    //Set frame layout manager
 
-    JPanel mainPanel = new JPanel(new BorderLayout());
-    JPanel numberPanel = buildNumberPanel();
-    JPanel operatorPanel = buildOperatorPanel();
-    JPanel clearPanel = buildClearPanel();
-    lcdDisplay = new JTextArea();
-    lcdDisplay.setFont(new Font("Dialog", Font.ITALIC, 16));
-    mainPanel.add(clearPanel, BorderLayout.SOUTH);
-    mainPanel.add(numberPanel, BorderLayout.CENTER);
-    mainPanel.add(operatorPanel, BorderLayout.EAST);
-    mainPanel.add(lcdDisplay, BorderLayout.NORTH);
+    setBackground(Color.gray);
 
-    errorDisplay = new JLabel(" ");
-    errorDisplay.setFont(new Font("Dialog", Font.ITALIC, 12));
+    jplMaster = new JPanel();
 
-    getContentPane().setLayout(new BorderLayout());
-    getContentPane().add(mainPanel, BorderLayout.CENTER);
-    getContentPane().add(errorDisplay, BorderLayout.SOUTH);
+    jlbOutput = new JLabel("0");
+    jlbOutput.setHorizontalTextPosition(JLabel.RIGHT);
+    jlbOutput.setBackground(Color.WHITE);
+    jlbOutput.setOpaque(true);
 
-    pack();
-    resetState();
-  }
+    // Add components to frame
+    getContentPane().add(jlbOutput, BorderLayout.NORTH);
 
-  /**
-   * When press number , if the number is equals to null throw exception.
-   */
-  private final ActionListener numberListener = new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
-      JComponent source = (JComponent) e.getSource();
-      Integer number = (Integer) source.getClientProperty(NUMBER_PROPERTY);
-      if (number == null) {
-        throw new IllegalStateException("No NUMBER_PROPERTY on component");
-      }
+    jbnButtons = new JButton[23];
+//		GridLayout(int rows, int cols, int hgap, int vgap)
 
-      numberButtonPressed(number.intValue());
-    }
-  };
+    JPanel jplButtons = new JPanel();      // container for Jbuttons
 
-  /**
-   * When press a decimal format , call decimalButtonPressed().
-   */
-  private final ActionListener decimalListener = new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
-      decimalButtonPressed();
-    }
-  };
-
-  /**
-   * When press an operator button , if it's null throw new exception.
-   */
-  private final ActionListener operatorListener = new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
-      JComponent source = (JComponent) e.getSource();
-      Integer opCode = (Integer) source.getClientProperty(OPERATOR_PROPERTY);
-      if (opCode == null) {
-        throw new IllegalStateException("No OPERATOR_PROPERTY on component");
-      }
-
-      operatorButtonPressed(opCode);
-    }
-  };
-
-  /**
-   * when press the clear button , just reset state.
-   */
-  private final ActionListener clearListener = new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
-      resetState();
-    }
-  };
-
-  /**
-   * when press the button , add listener.
-   *
-   * @param number the button pressed.
-   * @return the button which is active.
-   */
-  private JButton buildNumberButton(int number) {
-    JButton button = new JButton(Integer.toString(number));
-    button.putClientProperty(NUMBER_PROPERTY, Integer.valueOf(number));
-    button.addActionListener(numberListener);
-    return button;
-  }
-
-  /**
-   * when press operator button.
-   *
-   * @param symbol is the operator.
-   * @param opType is the number.
-   * @return the action.
-   */
-  private JButton buildOperatorButton(String symbol, int opType) {
-    JButton plus = new JButton(symbol);
-    plus.putClientProperty(OPERATOR_PROPERTY, Integer.valueOf(opType));
-    plus.addActionListener(operatorListener);
-    return plus;
-  }
-
-  /**
-   * Create a panel where we define the calculator style.
-   *
-   * @return the build panel.
-   */
-  public JPanel buildNumberPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridLayout(4, 3));
-
-    panel.add(buildNumberButton(7));
-    panel.add(buildNumberButton(8));
-    panel.add(buildNumberButton(9));
-    panel.add(buildNumberButton(4));
-    panel.add(buildNumberButton(5));
-    panel.add(buildNumberButton(6));
-    panel.add(buildNumberButton(1));
-    panel.add(buildNumberButton(2));
-    panel.add(buildNumberButton(3));
-
-    JButton buttonDec = new JButton(".");
-    buttonDec.addActionListener(decimalListener);
-    panel.add(buttonDec);
-
-    panel.add(buildNumberButton(0));
-
-    JButton buttonExit = new JButton("EXIT");
-    buttonExit.setMnemonic(KeyEvent.VK_C);
-    buttonExit.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        System.exit(0);
-      }
-    });
-    panel.add(buttonExit);
-    return panel;
-
-  }
-
-  /**
-   * build the operator buttons in the Calculator panel.
-   *
-   * @return the build panel.
-   */
-  public JPanel buildOperatorPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridLayout(4, 1));
-
-    panel.add(buildOperatorButton("+", Operator.PLUS));
-    panel.add(buildOperatorButton("-", Operator.MINUS));
-    panel.add(buildOperatorButton("*", Operator.MULTIPLY));
-    panel.add(buildOperatorButton("/", Operator.DIVIDE));
-    return panel;
-  }
-
-  /**
-   * Build the clear and equals panel buttons.
-   *
-   * @return the build panel.
-   */
-  public JPanel buildClearPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridLayout(1, 3));
-
-    JButton clear = new JButton("C");
-    clear.addActionListener(clearListener);
-    panel.add(clear);
-
-    JButton CEntry = new JButton("CE");
-    CEntry.addActionListener(clearListener);
-    panel.add(CEntry);
-
-    panel.add(buildOperatorButton("=", Operator.EQUALS));
-
-    return panel;
-  }
-
-  /**
-   * Define when press the button and max digits allowed.
-   *
-   * @param i is the pressed button.
-   */
-  public void numberButtonPressed(int i) {
-    String displayText = lcdDisplay.getText();
-    String valueString = Integer.toString(i);
-
-    if (("0".equals(displayText)) || (FIRST.equals(status))) {
-      displayText = "";
+    // Create numeric Jbuttons
+    for (int i = 0; i <= 9; i++) {
+      // set each Jbutton label to the value of index
+      jbnButtons[i] = new JButton(String.valueOf(i));
     }
 
-    int maxLength = (displayText.indexOf(".") >= 0) ? 21 : 20;
-    if (displayText.length() + valueString.length() <= maxLength) {
-      displayText += valueString;
-      clearError();
-    } else {
-      setError("Reached the 20 digit max");
+    // Create operator Jbuttons
+    jbnButtons[10] = new JButton("+/-");
+    jbnButtons[11] = new JButton(".");
+    jbnButtons[12] = new JButton("=");
+    jbnButtons[13] = new JButton("/");
+    jbnButtons[14] = new JButton("*");
+    jbnButtons[15] = new JButton("-");
+    jbnButtons[16] = new JButton("+");
+    jbnButtons[17] = new JButton("sqrt");
+    jbnButtons[18] = new JButton("1/x");
+    jbnButtons[19] = new JButton("%");
+
+    jplBackSpace = new JPanel();
+    jplBackSpace.setLayout(new GridLayout(1, 1, 2, 2));
+
+    jbnButtons[20] = new JButton("Backspace");
+    jplBackSpace.add(jbnButtons[20]);
+
+    jplControl = new JPanel();
+    jplControl.setLayout(new GridLayout(1, 2, 2, 2));
+
+    jbnButtons[21] = new JButton(" CE ");
+    jbnButtons[22] = new JButton("C");
+
+    jplControl.add(jbnButtons[21]);
+    jplControl.add(jbnButtons[22]);
+
+//		Setting all Numbered JButton's to Blue. The rest to Red
+    for (int i = 0; i < jbnButtons.length; i++) {
+      jbnButtons[i].setFont(f12);
+
+      if (i < 10)
+        jbnButtons[i].setForeground(Color.blue);
+
+      else
+        jbnButtons[i].setForeground(Color.red);
     }
 
-    lcdDisplay.setText(displayText);
-    status = VALID;
-  }
+    // Set panel layout manager for a 4 by 5 grid
+    jplButtons.setLayout(new GridLayout(4, 5, 2, 2));
 
-  /**
-   * When press the operator button.
-   *
-   * @param newOperation is the concrete operator.
-   */
-  public void operatorButtonPressed(int newOperation) {
-    Double displayValue = Double.valueOf(lcdDisplay.getText());
+    //Add buttons to keypad panel starting at top left
+    // First row
+    for (int i = 7; i <= 9; i++) {
+      jplButtons.add(jbnButtons[i]);
+    }
 
-    switch (previousOperation) {
-      case Operator.PLUS:
-        displayValue = lastValue + displayValue;
-        commitOperation(newOperation, displayValue);
-        break;
-      case Operator.MINUS:
-        displayValue = lastValue - displayValue;
-        commitOperation(newOperation, displayValue);
-        break;
-      case Operator.MULTIPLY:
-        displayValue = lastValue * displayValue;
-        commitOperation(newOperation, displayValue);
-        break;
-      case Operator.DIVIDE:
-        if (displayValue == 0) {
-          setError("ERROR: Division by Zero");
-        } else {
-          displayValue = lastValue / displayValue;
-          commitOperation(newOperation, displayValue);
+    // add button / and sqrt
+    jplButtons.add(jbnButtons[13]);
+    jplButtons.add(jbnButtons[17]);
+
+    // Second row
+    for (int i = 4; i <= 6; i++) {
+      jplButtons.add(jbnButtons[i]);
+    }
+
+    // add button * and x^2
+    jplButtons.add(jbnButtons[14]);
+    jplButtons.add(jbnButtons[18]);
+
+    // Third row
+    for (int i = 1; i <= 3; i++) {
+      jplButtons.add(jbnButtons[i]);
+    }
+
+    //adds button - and %
+    jplButtons.add(jbnButtons[15]);
+    jplButtons.add(jbnButtons[19]);
+
+    //Fourth Row
+    // add 0, +/-, ., +, and =
+    jplButtons.add(jbnButtons[0]);
+    jplButtons.add(jbnButtons[10]);
+    jplButtons.add(jbnButtons[11]);
+    jplButtons.add(jbnButtons[16]);
+    jplButtons.add(jbnButtons[12]);
+
+    jplMaster.setLayout(new BorderLayout());
+    jplMaster.add(jplBackSpace, BorderLayout.WEST);
+    jplMaster.add(jplControl, BorderLayout.EAST);
+    jplMaster.add(jplButtons, BorderLayout.SOUTH);
+
+    // Add components to frame
+    getContentPane().add(jplMaster, BorderLayout.SOUTH);
+    requestFocus();
+
+    //activate ActionListener
+    for (int i = 0; i < jbnButtons.length; i++) {
+      jbnButtons[i].addActionListener(this);
+    }
+
+    clearAll();
+
+    //add WindowListener for closing frame and ending program
+    addWindowListener(new WindowAdapter() {
+
+                        public void windowClosed(WindowEvent e) {
+                          System.exit(0);
+                        }
+                      }
+    );
+    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+  }  //End of Contructor Calculator
+
+  // Perform action
+  public void actionPerformed(ActionEvent e) {
+    double result = 0;
+
+    // Search for the button pressed until end of array or key found
+    for (int i = 0; i < jbnButtons.length; i++) {
+      if (e.getSource() == jbnButtons[i]) {
+        switch (i) {
+          case 0:
+            addDigitToDisplay(i);
+            break;
+
+          case 1:
+            addDigitToDisplay(i);
+            break;
+
+          case 2:
+            addDigitToDisplay(i);
+            break;
+
+          case 3:
+            addDigitToDisplay(i);
+            break;
+
+          case 4:
+            addDigitToDisplay(i);
+            break;
+
+          case 5:
+            addDigitToDisplay(i);
+            break;
+
+          case 6:
+            addDigitToDisplay(i);
+            break;
+
+          case 7:
+            addDigitToDisplay(i);
+            break;
+
+          case 8:
+            addDigitToDisplay(i);
+            break;
+
+          case 9:
+            addDigitToDisplay(i);
+            break;
+
+          case 10:  // +/-
+            processSignChange();
+            break;
+
+          case 11:  // decimal point
+            addDecimalPoint();
+            break;
+
+          case 12:  // =
+            processEquals();
+            break;
+
+          case 13:  // divide
+            processOperator("/");
+            break;
+
+          case 14:  // *
+            processOperator("*");
+            break;
+
+          case 15:  // -
+            processOperator("-");
+            break;
+
+          case 16:  // +
+            processOperator("+");
+            break;
+
+          case 17:  // sqrt
+            if (displayMode != ERROR_MODE) {
+              try {
+                if (getDisplayString().indexOf("-") == 0)
+                  displayError("Invalid input for function!");
+
+                result = Math.sqrt(getNumberInDisplay());
+                displayResult(result);
+              } catch (Exception ex) {
+                displayError("Invalid input for function!");
+                displayMode = ERROR_MODE;
+              }
+            }
+            break;
+
+          case 18:  // 1/x
+            if (displayMode != ERROR_MODE) {
+              try {
+                if (getNumberInDisplay() == 0)
+                  displayError("Cannot divide by zero!");
+
+                result = 1 / getNumberInDisplay();
+                displayResult(result);
+              } catch (Exception ex) {
+                displayError("Cannot divide by zero!");
+                displayMode = ERROR_MODE;
+              }
+            }
+            break;
+
+          case 19:  // %
+            if (displayMode != ERROR_MODE) {
+              try {
+                result = getNumberInDisplay() / 100;
+                displayResult(result);
+              } catch (Exception ex) {
+                displayError("Invalid input for function!");
+                displayMode = ERROR_MODE;
+              }
+            }
+            break;
+
+          case 20:  // backspace
+            if (displayMode != ERROR_MODE) {
+              setDisplayString(getDisplayString().substring(0,
+                      getDisplayString().length() - 1));
+
+              if (getDisplayString().length() < 1)
+                setDisplayString("0");
+            }
+            break;
+
+          case 21:  // CE
+            clearExisting();
+            break;
+
+          case 22:  // C
+            clearAll();
+            break;
         }
-        break;
-      case Operator.EQUALS:
-        commitOperation(newOperation, displayValue);
+      }
     }
   }
 
-  /**
-   * When press decimal button.
-   */
-  public void decimalButtonPressed() {
-    String displayText = lcdDisplay.getText();
-    if (FIRST.equals(status)) {
-      displayText = "0";
+  void setDisplayString(String s) {
+    jlbOutput.setText(s);
+  }
+
+  String getDisplayString() {
+    return jlbOutput.getText();
+  }
+
+  void addDigitToDisplay(int digit) {
+    if (clearOnNextDigit)
+      setDisplayString("");
+
+    String inputString = getDisplayString();
+
+    if (inputString.indexOf("0") == 0) {
+      inputString = inputString.substring(1);
     }
 
-    if (!displayText.contains(".")) {
-      displayText = displayText + ".";
+    if ((!inputString.equals("0") || digit > 0) && inputString.length() < MAX_INPUT_LENGTH) {
+      setDisplayString(inputString + digit);
     }
-    lcdDisplay.setText(displayText);
-    status = VALID;
+
+
+    displayMode = INPUT_MODE;
+    clearOnNextDigit = false;
   }
 
-  /**
-   * If message is empty.
-   *
-   * @param errorMessage is the message.
-   */
-  private void setError(String errorMessage) {
-    if (errorMessage.trim().equals("")) {
-      errorMessage = " ";
+  void addDecimalPoint() {
+    displayMode = INPUT_MODE;
+
+    if (clearOnNextDigit)
+      setDisplayString("");
+
+    String inputString = getDisplayString();
+
+    // If the input string already contains a decimal point, don't
+    //  do anything to it.
+    if (inputString.indexOf(".") < 0)
+      setDisplayString(new String(inputString + "."));
+  }
+
+  void processSignChange() {
+    if (displayMode == INPUT_MODE) {
+      String input = getDisplayString();
+
+      if (input.length() > 0 && !input.equals("0")) {
+        if (input.indexOf("-") == 0) {
+          setDisplayString(input.substring(1));
+        } else {
+          setDisplayString("-" + input);
+        }
+      }
+
+    } else if (displayMode == RESULT_MODE) {
+      double numberInDisplay = getNumberInDisplay();
+
+      if (numberInDisplay != 0)
+        displayResult(-numberInDisplay);
     }
-    errorDisplay.setText(errorMessage);
   }
 
-  /**
-   * To reset the error messages.
-   */
-  private void clearError() {
-    status = FIRST;
-    errorDisplay.setText(" ");
+  void clearAll() {
+    setDisplayString("0");
+    lastOperator = "0";
+    lastNumber = 0;
+    displayMode = INPUT_MODE;
+    clearOnNextDigit = true;
   }
 
-  /**
-   * Define the commit operation.
-   *
-   * @param operation define the operation type.
-   * @param result    is the result.
-   */
-  private void commitOperation(int operation, double result) {
-    status = FIRST;
-    lastValue = result;
-    previousOperation = operation;
-    lcdDisplay.setText(String.valueOf(result));
+  void clearExisting() {
+    setDisplayString("0");
+    clearOnNextDigit = true;
+    displayMode = INPUT_MODE;
   }
 
-  /**
-   * Resets the program state.
-   */
-  void resetState() {
-    clearError();
-    lastValue = 0;
-    previousOperation = Operator.EQUALS;
-
-    lcdDisplay.setText("0");
+  double getNumberInDisplay() {
+    String input = jlbOutput.getText();
+    return Double.parseDouble(input);
   }
 
+  void processOperator(String op) {
+    if (displayMode != ERROR_MODE) {
+      double numberInDisplay = getNumberInDisplay();
 
+      if (!lastOperator.equals("0")) {
+        try {
+          double result = processLastOperator();
+          displayResult(result);
+          lastNumber = result;
+        } catch (DivideByZeroException e) {
+        }
+      } else {
+        lastNumber = numberInDisplay;
+      }
+
+      clearOnNextDigit = true;
+      lastOperator = op;
+    }
+  }
+
+  void processEquals() {
+    double result = 0;
+
+    if (displayMode != ERROR_MODE) {
+      try {
+        result = processLastOperator();
+        displayResult(result);
+      } catch (DivideByZeroException e) {
+        displayError("Cannot divide by zero!");
+      }
+
+      lastOperator = "0";
+    }
+  }
+
+  double processLastOperator() throws DivideByZeroException {
+    double result = 0;
+    double numberInDisplay = getNumberInDisplay();
+
+    if (lastOperator.equals("/")) {
+      if (numberInDisplay == 0)
+        throw (new DivideByZeroException());
+
+      result = lastNumber / numberInDisplay;
+    }
+
+    if (lastOperator.equals("*"))
+      result = lastNumber * numberInDisplay;
+
+    if (lastOperator.equals("-"))
+      result = lastNumber - numberInDisplay;
+
+    if (lastOperator.equals("+"))
+      result = lastNumber + numberInDisplay;
+
+    return result;
+  }
+
+  void displayResult(double result) {
+    setDisplayString(Double.toString(result));
+    lastNumber = result;
+    displayMode = RESULT_MODE;
+    clearOnNextDigit = true;
+  }
+
+  void displayError(String errorMessage) {
+    setDisplayString(errorMessage);
+    lastNumber = 0;
+    displayMode = ERROR_MODE;
+    clearOnNextDigit = true;
+  }
 }
