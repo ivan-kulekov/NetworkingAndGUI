@@ -1,9 +1,7 @@
 import javax.swing.*;
-import javax.swing.text.AbstractDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -12,56 +10,45 @@ import java.awt.event.WindowEvent;
  * @since May 14 , 2015 17:00
  */
 public class Calculator extends JFrame implements ActionListener {
-  final int MAX_INPUT_LENGTH = 20;
-  final int INPUT_MODE = 0;
-  final int RESULT_MODE = 1;
-  final int ERROR_MODE = 2;
-  int displayMode;
 
-  boolean clearOnNextDigit, percent;
+  private int INPUT_MODE = 0;
+  private int RESULT_MODE = 1;
+  private int ERROR_MODE = 2;
+  private int displayMode;
+
+  boolean clearOnNextDigit;
   double lastNumber;
   String lastOperator;
 
   private JLabel jlbOutput;
   private JButton jbnButtons[];
-  private JPanel jplMaster, jplBackSpace, jplControl;
 
-	/*
-   * Font(String name, int style, int size)
-      Creates a new Font from the specified name, style and point size.
-	 */
 
   Font f12 = new Font("Times New Roman", 0, 12);
-  Font f121 = new Font("Times New Roman", 1, 12);
 
-  // Constructor
+  /**
+   * Add component to the frame in constructor and create the operations.
+   */
   public Calculator() {
-    //Set frame layout manager
-
     setBackground(Color.gray);
 
-    jplMaster = new JPanel();
+    JPanel jplMaster = new JPanel();
 
     jlbOutput = new JLabel("0");
     jlbOutput.setHorizontalTextPosition(JLabel.RIGHT);
     jlbOutput.setBackground(Color.WHITE);
     jlbOutput.setOpaque(true);
 
-    // Add components to frame
     getContentPane().add(jlbOutput, BorderLayout.NORTH);
 
     jbnButtons = new JButton[23];
-//		GridLayout(int rows, int cols, int hgap, int vgap)
 
-    JPanel jplButtons = new JPanel();      // container for Jbuttons
+    JPanel jplButtons = new JPanel();
 
-    // Create numeric Jbuttons
     for (int i = 0; i <= 9; i++) {
-      // set each Jbutton label to the value of index
       jbnButtons[i] = new JButton(String.valueOf(i));
     }
 
-    // Create operator Jbuttons
     jbnButtons[10] = new JButton("+/-");
     jbnButtons[11] = new JButton(".");
     jbnButtons[12] = new JButton("=");
@@ -73,13 +60,13 @@ public class Calculator extends JFrame implements ActionListener {
     jbnButtons[18] = new JButton("1/x");
     jbnButtons[19] = new JButton("%");
 
-    jplBackSpace = new JPanel();
+    JPanel jplBackSpace = new JPanel();
     jplBackSpace.setLayout(new GridLayout(1, 1, 2, 2));
 
-    jbnButtons[20] = new JButton("Backspace");
+    jbnButtons[20] = new JButton(" Backspace");
     jplBackSpace.add(jbnButtons[20]);
 
-    jplControl = new JPanel();
+    JPanel jplControl = new JPanel();
     jplControl.setLayout(new GridLayout(1, 2, 2, 2));
 
     jbnButtons[21] = new JButton(" CE ");
@@ -88,7 +75,6 @@ public class Calculator extends JFrame implements ActionListener {
     jplControl.add(jbnButtons[21]);
     jplControl.add(jbnButtons[22]);
 
-//		Setting all Numbered JButton's to Blue. The rest to Red
     for (int i = 0; i < jbnButtons.length; i++) {
       jbnButtons[i].setFont(f12);
 
@@ -99,39 +85,29 @@ public class Calculator extends JFrame implements ActionListener {
         jbnButtons[i].setForeground(Color.red);
     }
 
-    // Set panel layout manager for a 4 by 5 grid
     jplButtons.setLayout(new GridLayout(4, 5, 2, 2));
 
-    //Add buttons to keypad panel starting at top left
-    // First row
     for (int i = 7; i <= 9; i++) {
       jplButtons.add(jbnButtons[i]);
     }
 
-    // add button / and sqrt
     jplButtons.add(jbnButtons[13]);
     jplButtons.add(jbnButtons[17]);
 
-    // Second row
     for (int i = 4; i <= 6; i++) {
       jplButtons.add(jbnButtons[i]);
     }
 
-    // add button * and x^2
     jplButtons.add(jbnButtons[14]);
     jplButtons.add(jbnButtons[18]);
 
-    // Third row
     for (int i = 1; i <= 3; i++) {
       jplButtons.add(jbnButtons[i]);
     }
 
-    //adds button - and %
     jplButtons.add(jbnButtons[15]);
     jplButtons.add(jbnButtons[19]);
 
-    //Fourth Row
-    // add 0, +/-, ., +, and =
     jplButtons.add(jbnButtons[0]);
     jplButtons.add(jbnButtons[10]);
     jplButtons.add(jbnButtons[11]);
@@ -143,18 +119,15 @@ public class Calculator extends JFrame implements ActionListener {
     jplMaster.add(jplControl, BorderLayout.EAST);
     jplMaster.add(jplButtons, BorderLayout.SOUTH);
 
-    // Add components to frame
     getContentPane().add(jplMaster, BorderLayout.SOUTH);
     requestFocus();
 
-    //activate ActionListener
-    for (int i = 0; i < jbnButtons.length; i++) {
-      jbnButtons[i].addActionListener(this);
+    for (JButton jbnButton : jbnButtons) {
+      jbnButton.addActionListener(this);
     }
 
     clearAll();
 
-    //add WindowListener for closing frame and ending program
     addWindowListener(new WindowAdapter() {
 
                         public void windowClosed(WindowEvent e) {
@@ -162,14 +135,12 @@ public class Calculator extends JFrame implements ActionListener {
                         }
                       }
     );
-    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-  }  //End of Contructor Calculator
+    this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+  }
 
-  // Perform action
   public void actionPerformed(ActionEvent e) {
-    double result = 0;
+    double result;
 
-    // Search for the button pressed until end of array or key found
     for (int i = 0; i < jbnButtons.length; i++) {
       if (e.getSource() == jbnButtons[i]) {
         switch (i) {
@@ -213,35 +184,35 @@ public class Calculator extends JFrame implements ActionListener {
             addDigitToDisplay(i);
             break;
 
-          case 10:  // +/-
+          case 10:
             processSignChange();
             break;
 
-          case 11:  // decimal point
+          case 11:
             addDecimalPoint();
             break;
 
-          case 12:  // =
+          case 12:
             processEquals();
             break;
 
-          case 13:  // divide
+          case 13:
             processOperator("/");
             break;
 
-          case 14:  // *
+          case 14:
             processOperator("*");
             break;
 
-          case 15:  // -
+          case 15:
             processOperator("-");
             break;
 
-          case 16:  // +
+          case 16:
             processOperator("+");
             break;
 
-          case 17:  // sqrt
+          case 17:
             if (displayMode != ERROR_MODE) {
               try {
                 if (getDisplayString().indexOf("-") == 0)
@@ -256,7 +227,7 @@ public class Calculator extends JFrame implements ActionListener {
             }
             break;
 
-          case 18:  // 1/x
+          case 18:
             if (displayMode != ERROR_MODE) {
               try {
                 if (getNumberInDisplay() == 0)
@@ -271,7 +242,7 @@ public class Calculator extends JFrame implements ActionListener {
             }
             break;
 
-          case 19:  // %
+          case 19:
             if (displayMode != ERROR_MODE) {
               try {
                 result = getNumberInDisplay() / 100;
@@ -283,7 +254,7 @@ public class Calculator extends JFrame implements ActionListener {
             }
             break;
 
-          case 20:  // backspace
+          case 20:
             if (displayMode != ERROR_MODE) {
               setDisplayString(getDisplayString().substring(0,
                       getDisplayString().length() - 1));
@@ -293,11 +264,11 @@ public class Calculator extends JFrame implements ActionListener {
             }
             break;
 
-          case 21:  // CE
+          case 21:
             clearExisting();
             break;
 
-          case 22:  // C
+          case 22:
             clearAll();
             break;
         }
@@ -305,15 +276,16 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  void setDisplayString(String s) {
+  private void setDisplayString(String s) {
+
     jlbOutput.setText(s);
   }
 
-  String getDisplayString() {
+  private String getDisplayString() {
     return jlbOutput.getText();
   }
 
-  void addDigitToDisplay(int digit) {
+  private void addDigitToDisplay(int digit) {
     if (clearOnNextDigit)
       setDisplayString("");
 
@@ -323,6 +295,7 @@ public class Calculator extends JFrame implements ActionListener {
       inputString = inputString.substring(1);
     }
 
+    int MAX_INPUT_LENGTH = 20;
     if ((!inputString.equals("0") || digit > 0) && inputString.length() < MAX_INPUT_LENGTH) {
       setDisplayString(inputString + digit);
     }
@@ -332,7 +305,7 @@ public class Calculator extends JFrame implements ActionListener {
     clearOnNextDigit = false;
   }
 
-  void addDecimalPoint() {
+  private void addDecimalPoint() {
     displayMode = INPUT_MODE;
 
     if (clearOnNextDigit)
@@ -340,13 +313,11 @@ public class Calculator extends JFrame implements ActionListener {
 
     String inputString = getDisplayString();
 
-    // If the input string already contains a decimal point, don't
-    //  do anything to it.
-    if (inputString.indexOf(".") < 0)
-      setDisplayString(new String(inputString + "."));
+    if (!inputString.contains("."))
+      setDisplayString(inputString + ".");
   }
 
-  void processSignChange() {
+  private void processSignChange() {
     if (displayMode == INPUT_MODE) {
       String input = getDisplayString();
 
@@ -366,7 +337,7 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  void clearAll() {
+  private void clearAll() {
     setDisplayString("0");
     lastOperator = "0";
     lastNumber = 0;
@@ -374,18 +345,18 @@ public class Calculator extends JFrame implements ActionListener {
     clearOnNextDigit = true;
   }
 
-  void clearExisting() {
+  private void clearExisting() {
     setDisplayString("0");
     clearOnNextDigit = true;
     displayMode = INPUT_MODE;
   }
 
-  double getNumberInDisplay() {
+  private double getNumberInDisplay() {
     String input = jlbOutput.getText();
     return Double.parseDouble(input);
   }
 
-  void processOperator(String op) {
+  private void processOperator(String op) {
     if (displayMode != ERROR_MODE) {
       double numberInDisplay = getNumberInDisplay();
 
@@ -394,7 +365,7 @@ public class Calculator extends JFrame implements ActionListener {
           double result = processLastOperator();
           displayResult(result);
           lastNumber = result;
-        } catch (DivideByZeroException e) {
+        } catch (DivideByZeroException ignored) {
         }
       } else {
         lastNumber = numberInDisplay;
@@ -405,8 +376,8 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  void processEquals() {
-    double result = 0;
+  private void processEquals() {
+    double result;
 
     if (displayMode != ERROR_MODE) {
       try {
@@ -420,7 +391,7 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  double processLastOperator() throws DivideByZeroException {
+  private double processLastOperator() throws DivideByZeroException {
     double result = 0;
     double numberInDisplay = getNumberInDisplay();
 
@@ -443,14 +414,14 @@ public class Calculator extends JFrame implements ActionListener {
     return result;
   }
 
-  void displayResult(double result) {
+  private void displayResult(double result) {
     setDisplayString(Double.toString(result));
     lastNumber = result;
     displayMode = RESULT_MODE;
     clearOnNextDigit = true;
   }
 
-  void displayError(String errorMessage) {
+  private void displayError(String errorMessage) {
     setDisplayString(errorMessage);
     lastNumber = 0;
     displayMode = ERROR_MODE;

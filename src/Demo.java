@@ -11,14 +11,14 @@ public class Demo {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        Calculator calci = new Calculator();
-        Container contentPane = calci.getContentPane();
-        calci.setTitle("Java Calculator");
-        calci.setSize(441, 417);
-        calci.pack();
-        calci.setLocation(600, 250);
-        calci.setVisible(true);
-        calci.setResizable(false);
+        Calculator calculator = new Calculator();
+        Container contentPane = calculator.getContentPane();
+        calculator.setTitle("Calculator");
+        calculator.setSize(441, 417);
+        calculator.pack();
+        calculator.setLocation(600, 250);
+        calculator.setVisible(true);
+        calculator.setResizable(false);
       }
     });
   }
