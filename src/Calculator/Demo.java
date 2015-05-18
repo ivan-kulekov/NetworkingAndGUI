@@ -1,3 +1,7 @@
+package Calculator;
+
+import Calculator.Calculator;
+
 import javax.swing.*;
 import java.awt.*;
 
