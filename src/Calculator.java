@@ -11,9 +11,9 @@ import java.awt.event.WindowEvent;
  */
 public class Calculator extends JFrame implements ActionListener {
 
-  private int INPUT_MODE = 0;
-  private int RESULT_MODE = 1;
-  private int ERROR_MODE = 2;
+  private final int INPUT_MODE = 0;
+  private final int RESULT_MODE = 1;
+  private final int ERROR_MODE = 2;
   private int displayMode;
 
   boolean clearOnNextDigit;
