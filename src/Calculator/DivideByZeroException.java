@@ -2,12 +2,10 @@ package Calculator;
 
 /**
  * @author Ivan Kulekov (ivankulekov10@gmail.com)
- * @since May 15 , 2015 14:52
+ * @since May 18 , 2015 16:39
  */
-public class DivideByZeroException extends Exception {
-  /**
-   * When divide by zero then throw the exception.
-   */
+public class DivideByZeroException extends RuntimeException {
+
   public DivideByZeroException() {
     super();
   }

@@ -9,10 +9,9 @@ import java.awt.event.WindowEvent;
 
 /**
  * @author Ivan Kulekov (ivankulekov10@gmail.com)
- * @since May 14 , 2015 17:00
+ * @since May 18 , 2015 16:37
  */
 public class Calculator extends JFrame implements ActionListener {
-
   private final int INPUT_MODE = 0;
   private final int RESULT_MODE = 1;
   private final int ERROR_MODE = 2;
@@ -32,20 +31,20 @@ public class Calculator extends JFrame implements ActionListener {
    * Add component to the frame in constructor and create the operations.
    */
   public Calculator() {
-    setBackground(Color.gray);
+    setBackground(Color.WHITE);
 
     JPanel jplMaster = new JPanel();
-
+    jplMaster.setBackground(Color.lightGray);
     jlbOutput = new JLabel("0");
     jlbOutput.setHorizontalTextPosition(JLabel.RIGHT);
-    jlbOutput.setBackground(Color.WHITE);
+    jlbOutput.setBackground(Color.LIGHT_GRAY);
     jlbOutput.setOpaque(true);
 
     getContentPane().add(jlbOutput, BorderLayout.NORTH);
 
     jbnButtons = new JButton[23];
-
     JPanel jplButtons = new JPanel();
+
 
     for (int i = 0; i <= 9; i++) {
       jbnButtons[i] = new JButton(String.valueOf(i));
@@ -65,13 +64,15 @@ public class Calculator extends JFrame implements ActionListener {
     JPanel jplBackSpace = new JPanel();
     jplBackSpace.setLayout(new GridLayout(1, 1, 2, 2));
 
-    jbnButtons[20] = new JButton(" Backspace");
+    jbnButtons[20] = new JButton("<");
     jplBackSpace.add(jbnButtons[20]);
+
 
     JPanel jplControl = new JPanel();
     jplControl.setLayout(new GridLayout(1, 2, 2, 2));
 
-    jbnButtons[21] = new JButton(" CE ");
+    jplControl.setBackground(Color.lightGray);
+    jbnButtons[21] = new JButton("CE");
     jbnButtons[22] = new JButton("C");
 
     jplControl.add(jbnButtons[21]);
@@ -81,13 +82,14 @@ public class Calculator extends JFrame implements ActionListener {
       jbnButtons[i].setFont(f12);
 
       if (i < 10)
-        jbnButtons[i].setForeground(Color.blue);
+        jbnButtons[i].setForeground(Color.BLACK);
 
       else
-        jbnButtons[i].setForeground(Color.red);
+        jbnButtons[i].setForeground(Color.BLUE);
     }
 
     jplButtons.setLayout(new GridLayout(4, 5, 2, 2));
+    jplButtons.setBackground(Color.lightGray);
 
     for (int i = 7; i <= 9; i++) {
       jplButtons.add(jbnButtons[i]);
@@ -126,6 +128,7 @@ public class Calculator extends JFrame implements ActionListener {
 
     for (JButton jbnButton : jbnButtons) {
       jbnButton.addActionListener(this);
+      jbnButton.setBackground(Color.lightGray);
     }
 
     clearAll();
@@ -278,16 +281,16 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  private void setDisplayString(String s) {
+  public void setDisplayString(String s) {
 
     jlbOutput.setText(s);
   }
 
-  private String getDisplayString() {
+  public String getDisplayString() {
     return jlbOutput.getText();
   }
 
-  private void addDigitToDisplay(int digit) {
+  public void addDigitToDisplay(int digit) {
     if (clearOnNextDigit)
       setDisplayString("");
 
@@ -307,7 +310,7 @@ public class Calculator extends JFrame implements ActionListener {
     clearOnNextDigit = false;
   }
 
-  private void addDecimalPoint() {
+  public void addDecimalPoint() {
     displayMode = INPUT_MODE;
 
     if (clearOnNextDigit)
@@ -319,7 +322,7 @@ public class Calculator extends JFrame implements ActionListener {
       setDisplayString(inputString + ".");
   }
 
-  private void processSignChange() {
+  public void processSignChange() {
     if (displayMode == INPUT_MODE) {
       String input = getDisplayString();
 
@@ -339,7 +342,7 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  private void clearAll() {
+  public void clearAll() {
     setDisplayString("0");
     lastOperator = "0";
     lastNumber = 0;
@@ -347,18 +350,18 @@ public class Calculator extends JFrame implements ActionListener {
     clearOnNextDigit = true;
   }
 
-  private void clearExisting() {
+  public void clearExisting() {
     setDisplayString("0");
     clearOnNextDigit = true;
     displayMode = INPUT_MODE;
   }
 
-  private double getNumberInDisplay() {
+  public double getNumberInDisplay() {
     String input = jlbOutput.getText();
     return Double.parseDouble(input);
   }
 
-  private void processOperator(String op) {
+  public void processOperator(String op) {
     if (displayMode != ERROR_MODE) {
       double numberInDisplay = getNumberInDisplay();
 
@@ -378,7 +381,7 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  private void processEquals() {
+  public void processEquals() {
     double result;
 
     if (displayMode != ERROR_MODE) {
@@ -393,7 +396,7 @@ public class Calculator extends JFrame implements ActionListener {
     }
   }
 
-  private double processLastOperator() throws DivideByZeroException {
+  public double processLastOperator() throws DivideByZeroException {
     double result = 0;
     double numberInDisplay = getNumberInDisplay();
 
@@ -416,14 +419,14 @@ public class Calculator extends JFrame implements ActionListener {
     return result;
   }
 
-  private void displayResult(double result) {
+  public void displayResult(double result) {
     setDisplayString(Double.toString(result));
     lastNumber = result;
     displayMode = RESULT_MODE;
     clearOnNextDigit = true;
   }
 
-  private void displayError(String errorMessage) {
+  public void displayError(String errorMessage) {
     setDisplayString(errorMessage);
     lastNumber = 0;
     displayMode = ERROR_MODE;
